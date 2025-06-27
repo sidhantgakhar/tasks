@@ -67,6 +67,14 @@
             background-color: #2563eb; /* Darker blue */
             transform: translateY(-1px);
         }
+        .btn-done {
+            background-color: #10b981; /* Green */
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-done:hover {
+            background-color: #059669; /* Darker green */
+            transform: translateY(-1px);
+        }
         .modal {
             background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black overlay */
         }
@@ -139,6 +147,13 @@
             color: #ffffff; /* text-white */
             border-color: #4f46e5; /* darker indigo border */
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .completed-task-card {
+            opacity: 0.7;
+            text-decoration: line-through;
+            background-color: #f0f4f8; /* Lighter background for completed tasks */
+            border-color: #94a3b8; /* Muted border color */
         }
     </style>
 </head>
@@ -242,7 +257,7 @@
             </button>
         </form>
 
-        <!-- Export/Import Buttons -->
+        <!-- Export/Import & Undo Buttons -->
         <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
             <button id="exportTasks" class="btn-secondary flex-1 py-3 px-6 rounded-md text-gray-700 font-semibold text-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300">
                 Export Tasks
@@ -251,6 +266,17 @@
             <button id="importTasks" class="btn-secondary flex-1 py-3 px-6 rounded-md text-gray-700 font-semibold text-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus="ring-offset-2 focus:ring-gray-300">
                 Import Tasks
             </button>
+            <button id="undoButton" class="btn-secondary flex-1 py-3 px-6 rounded-md text-gray-700 font-semibold text-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300" disabled>
+                Undo Last Action
+            </button>
+        </div>
+
+        <!-- Completed Tasks List -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Completed Tasks</h2>
+            <div id="completedTaskList" class="space-y-4">
+                <p class="text-center text-gray-500" id="noCompletedTasksMessage">No completed tasks yet.</p>
+            </div>
         </div>
 
     </div>
@@ -348,6 +374,8 @@
     <script>
         // Array to hold all tasks
         let tasks = [];
+        let history = []; // Stores copies of the tasks array for undo functionality
+        const MAX_HISTORY_SIZE = 20; // Limit history size to prevent excessive memory usage
 
         // DOM elements for Add Task Form
         const taskForm = document.getElementById('taskForm');
@@ -366,10 +394,13 @@
         // DOM elements for Matrix and other controls
         const taskList = document.getElementById('taskList'); // This now refers to the container for the matrix
         const noTasksMessage = document.getElementById('noTasksMessage');
+        const completedTaskList = document.getElementById('completedTaskList'); // New: Completed tasks list
+        const noCompletedTasksMessage = document.getElementById('noCompletedTasksMessage'); // New: Message for no completed tasks
         const cancelEditButton = document.getElementById('cancelEdit');
         const exportTasksButton = document.getElementById('exportTasks');
         const importTasksButton = document.getElementById('importTasks');
         const importFileInput = document.getElementById('importFile');
+        const undoButton = document.getElementById('undoButton'); // New: Undo button
 
         // Quadrant elements
         const quadrantUrgentImportant = document.getElementById('quadrantUrgentImportant');
@@ -418,6 +449,7 @@
             try {
                 const storedTasks = localStorage.getItem('todoTasks');
                 tasks = storedTasks ? JSON.parse(storedTasks) : [];
+                saveState(); // Save initial state to history
                 renderTasks();
                 setLastSelectedCategory(); // Set the last selected category on load
             } catch (e) {
@@ -425,7 +457,53 @@
                 showTemporaryMessage("Failed to load tasks from local storage. Data might be corrupted.", 'error');
                 tasks = []; // Reset tasks if loading fails
                 saveTasks(); // Clear potentially corrupted data
+                saveState(); // Save empty state to history
                 renderTasks();
+            }
+        }
+
+        /**
+         * Saves the current state of the tasks array to the history for undo functionality.
+         */
+        function saveState() {
+            // Only save state if it's different from the last saved state
+            if (history.length > 0 && JSON.stringify(history[history.length - 1]) === JSON.stringify(tasks)) {
+                return; // State hasn't changed, no need to save
+            }
+            history.push(JSON.parse(JSON.stringify(tasks))); // Push a deep copy
+            if (history.length > MAX_HISTORY_SIZE) {
+                history.shift(); // Remove the oldest state
+            }
+            updateUndoButtonState();
+        }
+
+        /**
+         * Reverts the tasks array to the previous state in history.
+         */
+        function undoLastAction() {
+            if (history.length > 1) { // Need at least two states to undo (current + previous)
+                history.pop(); // Remove current state
+                tasks = JSON.parse(JSON.stringify(history[history.length - 1])); // Revert to previous state
+                saveTasks(); // Save to local storage
+                renderTasks(); // Re-render UI
+                showTemporaryMessage('Last action undone!', 'info');
+            } else if (history.length === 1) { // Only initial state left, means no actions to undo beyond initial load
+                tasks = []; // Revert to empty if only initial state was there and it was empty
+                history = []; // Clear history
+                saveTasks();
+                renderTasks();
+                showTemporaryMessage('All actions undone. List is empty.', 'info');
+            }
+            updateUndoButtonState();
+        }
+
+        /**
+         * Updates the disabled state of the undo button.
+         */
+        function updateUndoButtonState() {
+            if (undoButton) {
+                // Button is enabled if there's more than one state in history (current + at least one previous to revert to)
+                undoButton.disabled = history.length <= 1;
             }
         }
 
@@ -448,7 +526,16 @@
             const tabGroup = document.getElementById(tabGroupId);
             if (!tabGroup) return;
 
-            const hiddenInput = document.getElementById(tabGroupId.replace('Tabs', '')); // e.g., 'taskCategory'
+            // Determine the ID of the hidden input associated with this tab group
+            let hiddenInputId;
+            if (tabGroupId.startsWith('task')) {
+                hiddenInputId = tabGroupId.replace('Tabs', ''); // e.g., 'taskCategory'
+            } else if (tabGroupId.startsWith('editTask')) {
+                hiddenInputId = tabGroupId.replace('Tabs', ''); // e.g., 'editTaskCategory'
+            } else {
+                return; // Unknown tab group ID
+            }
+            const hiddenInput = document.getElementById(hiddenInputId);
             if (!hiddenInput) return;
 
             const buttons = tabGroup.querySelectorAll('.tab-selector-button');
@@ -480,23 +567,33 @@
         }
 
         /**
-         * Renders all tasks into the priority matrix quadrants.
+         * Renders all tasks into the priority matrix quadrants and completed list.
          */
         function renderTasks() {
-            // Clear all quadrants first
+            // Clear all quadrants and completed list first
             quadrantUrgentImportant.innerHTML = '';
             quadrantUrgentNotImportant.innerHTML = '';
             quadrantNotUrgentImportant.innerHTML = '';
             quadrantNotUrgentNotImportant.innerHTML = '';
+            completedTaskList.innerHTML = ''; // Clear completed list
 
-            if (tasks.length === 0) {
+            const activeTasks = tasks.filter(task => !task.completed);
+            const completedTasks = tasks.filter(task => task.completed);
+
+            if (activeTasks.length === 0) {
                 noTasksMessage.classList.remove('hidden');
-                return;
             } else {
                 noTasksMessage.classList.add('hidden');
             }
 
-            tasks.forEach(task => {
+            if (completedTasks.length === 0) {
+                noCompletedTasksMessage.classList.remove('hidden');
+            } else {
+                noCompletedTasksMessage.classList.add('hidden');
+            }
+
+
+            activeTasks.forEach(task => {
                 const taskCard = document.createElement('div');
                 taskCard.id = `task-${task.id}`;
                 
@@ -537,9 +634,15 @@
                     taskCard.appendChild(metaDiv);
                 }
 
-                // Actions (Edit, Delete)
+                // Actions (Done, Edit, Delete)
                 const actionsDiv = document.createElement('div');
                 actionsDiv.classList.add('flex', 'gap-2', 'mt-3', 'justify-end');
+
+                const doneButton = document.createElement('button');
+                doneButton.classList.add('btn-done', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
+                doneButton.textContent = 'Done';
+                doneButton.onclick = () => markTaskAsDone(task.id);
+                actionsDiv.appendChild(doneButton);
 
                 const editButton = document.createElement('button');
                 editButton.classList.add('btn-edit', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
@@ -568,6 +671,58 @@
                 } else { // Default to Not Urgent & Not Important if values are null or not set
                     quadrantNotUrgentNotImportant.appendChild(taskCard);
                 }
+            });
+
+            // Render completed tasks
+            completedTasks.forEach(task => {
+                const completedTaskCard = document.createElement('div');
+                completedTaskCard.id = `task-${task.id}`;
+                
+                // Determine category border color
+                const categoryBorderClass = categoryColors[task.category] || categoryColors["None"];
+
+                completedTaskCard.classList.add(
+                    'task-card', 'completed-task-card', // Add completed specific styles
+                    'bg-white', 'p-4', 'rounded-lg', 'shadow-sm', 'flex', 'flex-col', 'space-y-2',
+                    'border-l-4', categoryBorderClass
+                );
+
+                const titleElement = document.createElement('h4');
+                titleElement.classList.add('text-lg', 'font-semibold', 'text-gray-900');
+                titleElement.textContent = task.title;
+                completedTaskCard.appendChild(titleElement);
+
+                if (task.description) {
+                    const descriptionElement = document.createElement('p');
+                    descriptionElement.classList.add('text-gray-700', 'text-sm');
+                    descriptionElement.textContent = task.description;
+                    completedTaskCard.appendChild(descriptionElement);
+                }
+
+                if (task.category) {
+                    const categorySpan = document.createElement('span');
+                    categorySpan.classList.add('bg-blue-100', 'text-blue-800', 'px-2.5', 'py-0.5', 'rounded-full', 'text-xs', 'font-medium');
+                    categorySpan.textContent = `Category: ${task.category}`;
+                    completedTaskCard.appendChild(categorySpan);
+                }
+
+                const actionsDiv = document.createElement('div');
+                actionsDiv.classList.add('flex', 'gap-2', 'mt-3', 'justify-end');
+
+                const undoDoneButton = document.createElement('button');
+                undoDoneButton.classList.add('btn-secondary', 'py-1', 'px-3', 'rounded-md', 'text-gray-700', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
+                undoDoneButton.textContent = 'Undo Done';
+                undoDoneButton.onclick = () => markTaskAsNotDone(task.id);
+                actionsDiv.appendChild(undoDoneButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('btn-delete', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => showConfirmDialog('Delete Task', 'Are you sure you want to delete this task?', () => deleteTaskConfirmed(task.id));
+                actionsDiv.appendChild(deleteButton);
+
+                completedTaskCard.appendChild(actionsDiv);
+                completedTaskList.appendChild(completedTaskCard);
             });
         }
 
@@ -601,6 +756,7 @@
 
             tasks.unshift(newTask); // Add to the beginning of the array
             saveTasks();
+            saveState(); // Save state after adding
             renderTasks();
             taskForm.reset(); // Clear the form
             // Save the last selected category
@@ -612,12 +768,43 @@
         }
 
         /**
+         * Marks a task as completed.
+         * @param {string} id - The ID of the task to mark as done.
+         */
+        function markTaskAsDone(id) {
+            const taskIndex = tasks.findIndex(task => task.id === id);
+            if (taskIndex > -1) {
+                tasks[taskIndex].completed = true;
+                saveTasks();
+                saveState(); // Save state after marking as done
+                renderTasks();
+                showTemporaryMessage('Task marked as done!', 'success');
+            }
+        }
+
+        /**
+         * Marks a task as not completed (moves it back to the matrix).
+         * @param {string} id - The ID of the task to mark as not done.
+         */
+        function markTaskAsNotDone(id) {
+            const taskIndex = tasks.findIndex(task => task.id === id);
+            if (taskIndex > -1) {
+                tasks[taskIndex].completed = false;
+                saveTasks();
+                saveState(); // Save state after marking as not done
+                renderTasks();
+                showTemporaryMessage('Task moved back to active tasks!', 'info');
+            }
+        }
+
+        /**
          * Deletes a task by its ID. This is the function called after confirmation.
          * @param {string} id - The ID of the task to delete.
          */
         function deleteTaskConfirmed(id) {
             tasks = tasks.filter(task => task.id !== id);
             saveTasks();
+            saveState(); // Save state after deleting
             renderTasks();
             showTemporaryMessage('Task deleted successfully!', 'success');
         }
@@ -684,6 +871,7 @@
                     importance: importance || null
                 };
                 saveTasks();
+                saveState(); // Save state after editing
                 renderTasks();
                 closeEditModal();
                 showTemporaryMessage('Task updated successfully!', 'success');
@@ -738,6 +926,7 @@
                         // No existing tasks, just import
                         tasks = importedData;
                         saveTasks();
+                        saveState(); // Save state after import
                         renderTasks();
                         showTemporaryMessage('Tasks imported successfully!', 'success');
                     }
@@ -911,6 +1100,7 @@
          * @param {Array} newTasks - The tasks to merge.
          */
         function mergeImportedTasks(newTasks) {
+            saveState(); // Save state before merge operation
             newTasks.forEach(newTask => {
                 const existingIndex = tasks.findIndex(task => task.id === newTask.id);
                 if (existingIndex > -1) {
@@ -932,6 +1122,7 @@
          * @param {Array} newTasks - The tasks to replace/merge with.
          */
         function replaceImportedTasks(newTasks) {
+            saveState(); // Save state before replace operation
             const combinedTasksMap = new Map();
 
             // Add existing tasks to the map first
@@ -1004,6 +1195,9 @@
 
         // Handle file selection for import
         importFileInput.addEventListener('change', importTasks);
+
+        // Undo button click
+        undoButton.addEventListener('click', undoLastAction);
 
     </script>
 </body>
