@@ -109,6 +109,9 @@
             padding-bottom: 0.5rem;
             border-bottom: 1px solid #e2e8f0;
             color: #475569;
+            display: flex; /* For toggle button alignment */
+            justify-content: space-between; /* For toggle button alignment */
+            align-items: center; /* For toggle button alignment */
         }
         .matrix-grid {
             display: grid;
@@ -155,12 +158,34 @@
             background-color: #f0f4f8; /* Lighter background for completed tasks */
             border-color: #94a3b8; /* Muted border color */
         }
+
+        /* Collapsible Quadrant Styles */
+        .quadrant-content.collapsed {
+            display: none;
+        }
+        .toggle-quadrant-button svg.rotated {
+            transform: rotate(180deg);
+        }
+
+        /* Drag and Drop Styles */
+        .drag-over {
+            border-style: dashed;
+            border-width: 2px;
+            border-color: #6366f1; /* Indigo-500 */
+            background-color: #e0e7ff; /* Indigo-100 */
+        }
+        /* Hide toggle button on larger screens for drag-and-drop */
+        @media (min-width: 768px) {
+            .toggle-quadrant-button {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
 
     <!-- Main Container -->
-    <div class="w-full max-w-12xl bg-white rounded-xl shadow-2xl p-8 space-y-8">
+    <div class="w-full max-w-screen-2xl bg-white rounded-xl shadow-2xl p-8 space-y-8">
 
         <h1 class="text-4xl font-extrabold text-center text-gray-900 mb-8">My To-Do List</h1>
 
@@ -171,27 +196,55 @@
 
             <div class="matrix-grid">
                 <!-- Quadrant 1: Do First (Urgent & Important) -->
-                <div class="priority-quadrant border-red-500 border-2">
-                    <h3 class="priority-quadrant-header text-red-700">Do First</h3>
-                    <div id="quadrantUrgentImportant" class="space-y-4"></div>
+                <div class="priority-quadrant border-red-500 border-2" data-quadrant-type="urgent-important">
+                    <h3 class="priority-quadrant-header text-red-700">
+                        <span>Do First</span>
+                        <button type="button" class="toggle-quadrant-button text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <svg class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </h3>
+                    <div id="quadrantUrgentImportantContent" class="quadrant-content space-y-4"></div>
                 </div>
 
                 <!-- Quadrant 3: Schedule (Not Urgent & Important) -->
-                <div class="priority-quadrant border-blue-500 border-2">
-                    <h3 class="priority-quadrant-header text-blue-700">Schedule</h3>
-                    <div id="quadrantNotUrgentImportant" class="space-y-4"></div>
+                <div class="priority-quadrant border-blue-500 border-2" data-quadrant-type="not-urgent-important">
+                    <h3 class="priority-quadrant-header text-blue-700">
+                        <span>Schedule</span>
+                        <button type="button" class="toggle-quadrant-button text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <svg class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </h3>
+                    <div id="quadrantNotUrgentImportantContent" class="quadrant-content space-y-4"></div>
                 </div>
 
                 <!-- Quadrant 2: Delegate (Urgent & Not Important) -->
-                <div class="priority-quadrant border-yellow-500 border-2">
-                    <h3 class="priority-quadrant-header text-yellow-700">Delegate</h3>
-                    <div id="quadrantUrgentNotImportant" class="space-y-4"></div>
+                <div class="priority-quadrant border-yellow-500 border-2" data-quadrant-type="urgent-not-important">
+                    <h3 class="priority-quadrant-header text-yellow-700">
+                        <span>Delegate</span>
+                        <button type="button" class="toggle-quadrant-button text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <svg class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </h3>
+                    <div id="quadrantUrgentNotImportantContent" class="quadrant-content space-y-4"></div>
                 </div>
 
                 <!-- Quadrant 4: Eliminate (Not Urgent & Not Important) -->
-                <div class="priority-quadrant border-green-500 border-2">
-                    <h3 class="priority-quadrant-header text-green-700">Eliminate</h3>
-                    <div id="quadrantNotUrgentNotImportant" class="space-y-4"></div>
+                <div class="priority-quadrant border-green-500 border-2" data-quadrant-type="not-urgent-not-important">
+                    <h3 class="priority-quadrant-header text-green-700">
+                        <span>Eliminate</span>
+                        <button type="button" class="toggle-quadrant-button text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <svg class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </h3>
+                    <div id="quadrantNotUrgentNotImportantContent" class="quadrant-content space-y-4"></div>
                 </div>
             </div>
         </div>
@@ -659,10 +712,11 @@
          */
         function renderTasks() {
             // Clear all quadrants and completed list first
-            quadrantUrgentImportant.innerHTML = '';
-            quadrantUrgentNotImportant.innerHTML = '';
-            quadrantNotUrgentImportant.innerHTML = '';
-            quadrantNotUrgentNotImportant.innerHTML = '';
+            // FIX: Target the content divs directly for clearing
+            document.getElementById('quadrantUrgentImportantContent').innerHTML = '';
+            document.getElementById('quadrantNotUrgentImportantContent').innerHTML = '';
+            document.getElementById('quadrantUrgentNotImportantContent').innerHTML = '';
+            document.getElementById('quadrantNotUrgentNotImportantContent').innerHTML = '';
             completedTaskList.innerHTML = ''; // Clear completed list
 
             const activeTasks = tasks.filter(task => !task.completed);
@@ -722,14 +776,29 @@
 
             // Render tasks into their respective quadrants
             [
-                { tasks: doFirstTasks, container: quadrantUrgentImportant },
-                { tasks: scheduleTasks, container: quadrantNotUrgentImportant },
-                { tasks: delegateTasks, container: quadrantUrgentNotImportant },
-                { tasks: eliminateTasks, container: quadrantNotUrgentNotImportant }
-            ].forEach(({ tasks: quadrantTasks, container }) => {
+                { tasks: doFirstTasks, contentId: 'quadrantUrgentImportantContent' },
+                { tasks: scheduleTasks, contentId: 'quadrantNotUrgentImportantContent' },
+                { tasks: delegateTasks, contentId: 'quadrantUrgentNotImportantContent' },
+                { tasks: eliminateTasks, contentId: 'quadrantNotUrgentNotImportantContent' }
+            ].forEach(({ tasks: quadrantTasks, contentId }) => {
+                const quadrantContent = document.getElementById(contentId);
+                quadrantContent.innerHTML = ''; // Clear content before rendering
+
                 quadrantTasks.forEach(task => {
                     const taskCard = document.createElement('div');
                     taskCard.id = `task-${task.id}`;
+                    // Make task cards draggable on webview
+                    if (window.innerWidth >= 768) { // Only draggable on screens >= md breakpoint
+                        taskCard.setAttribute('draggable', 'true');
+                        taskCard.addEventListener('dragstart', (e) => {
+                            e.dataTransfer.setData('text/plain', task.id);
+                            // Add a class to the dragged item for visual feedback if needed
+                            e.currentTarget.classList.add('opacity-50');
+                        });
+                        taskCard.addEventListener('dragend', (e) => {
+                            e.currentTarget.classList.remove('opacity-50');
+                        });
+                    }
                     
                     // Determine category border color
                     const categoryBorderClass = categoryColors[task.category] || categoryColors["None"];
@@ -745,6 +814,19 @@
                     titleElement.classList.add('text-lg', 'font-semibold', 'text-gray-900');
                     titleElement.textContent = task.title;
                     taskCard.appendChild(titleElement);
+
+                    // Drag Handle Icon (User Story 21)
+                    // Added as a child of taskCard, positioned absolutely
+                    const dragHandle = document.createElement('div');
+                    dragHandle.classList.add('absolute', 'top-2', 'right-2', 'cursor-grab', 'text-gray-400', 'hover:text-gray-600', 'md:block', 'hidden');
+                    dragHandle.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    `;
+                    taskCard.style.position = 'relative'; // Ensure relative positioning for absolute child
+                    taskCard.appendChild(dragHandle);
+
 
                     // Task Description (if present)
                     if (task.description) {
@@ -805,7 +887,7 @@
                     actionsDiv.appendChild(deleteButton);
 
                     taskCard.appendChild(actionsDiv);
-                    container.appendChild(taskCard);
+                    quadrantContent.appendChild(taskCard); // Append to content div
                 });
             });
 
@@ -1358,6 +1440,95 @@
 
         // Undo button click
         undoButton.addEventListener('click', undoLastAction);
+
+        // --- Collapsible Quadrant Logic (User Story 20) ---
+        document.querySelectorAll('.priority-quadrant-header').forEach(header => {
+            header.addEventListener('click', (event) => {
+                // Ensure click is not on a child element that has its own action (e.g., if we added buttons inside later)
+                if (event.target.closest('.toggle-quadrant-button') || event.target.tagName === 'SPAN') {
+                    const quadrantContent = header.nextElementSibling; // The div containing tasks
+                    const toggleButtonSvg = header.querySelector('.toggle-quadrant-button svg');
+
+                    if (quadrantContent && toggleButtonSvg) {
+                        quadrantContent.classList.toggle('collapsed');
+                        toggleButtonSvg.classList.toggle('rotated');
+                    }
+                }
+            });
+        });
+
+        // --- Drag and Drop Logic (User Story 21) ---
+        document.querySelectorAll('.priority-quadrant').forEach(quadrant => {
+            // Add dragover listener to allow dropping
+            quadrant.addEventListener('dragover', (e) => {
+                if (window.innerWidth >= 768) { // Only enable D&D on webview
+                    e.preventDefault(); // Allow drop
+                    quadrant.classList.add('drag-over');
+                }
+            });
+
+            // Remove drag-over styling when not hovering
+            quadrant.addEventListener('dragleave', (e) => {
+                if (window.innerWidth >= 768) {
+                    quadrant.classList.remove('drag-over');
+                }
+            });
+
+            // Handle drop event
+            quadrant.addEventListener('drop', (e) => {
+                if (window.innerWidth >= 768) { // Only enable D&D on webview
+                    e.preventDefault();
+                    quadrant.classList.remove('drag-over');
+
+                    const taskId = e.dataTransfer.getData('text/plain');
+                    const targetQuadrantType = quadrant.dataset.quadrantType;
+
+                    const taskIndex = tasks.findIndex(t => t.id === taskId);
+
+                    if (taskIndex > -1 && targetQuadrantType) {
+                        const task = tasks[taskIndex];
+                        let newUrgency = task.urgency;
+                        let newImportance = task.importance;
+                        let newScheduledDate = null;
+                        let newDelegatedTo = null;
+
+                        switch (targetQuadrantType) {
+                            case 'urgent-important':
+                                newUrgency = 'Urgent';
+                                newImportance = 'Important';
+                                break;
+                            case 'not-urgent-important':
+                                newUrgency = 'Not Urgent';
+                                newImportance = 'Important';
+                                // Preserve scheduled date if moving within or to Schedule quadrant
+                                newScheduledDate = task.scheduledDate;
+                                break;
+                            case 'urgent-not-important':
+                                newUrgency = 'Urgent';
+                                newImportance = 'Not Important';
+                                // Preserve delegated to if moving within or to Delegate quadrant
+                                newDelegatedTo = task.delegatedTo;
+                                break;
+                            case 'not-urgent-not-important':
+                                newUrgency = 'Not Urgent';
+                                newImportance = 'Not Important';
+                                break;
+                        }
+
+                        // Update task properties
+                        tasks[taskIndex].urgency = newUrgency;
+                        tasks[taskIndex].importance = newImportance;
+                        tasks[taskIndex].scheduledDate = newScheduledDate; // Clear if not in Schedule quadrant
+                        tasks[taskIndex].delegatedTo = newDelegatedTo;     // Clear if not in Delegate quadrant
+
+                        saveTasks();
+                        saveState(); // Save state after drag-drop
+                        renderTasks();
+                        showTemporaryMessage(`Task "${task.title}" moved!`, 'success');
+                    }
+                }
+            });
+        });
 
     </script>
 </body>
