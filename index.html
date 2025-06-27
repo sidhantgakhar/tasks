@@ -112,6 +112,34 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* Tab Selector Styles */
+        .tab-selector-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+        }
+        .tab-selector-button {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            background-color: #e2e8f0; /* bg-gray-200 */
+            color: #475569; /* text-gray-700 */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            border: 1px solid transparent; /* default border */
+        }
+        .tab-selector-button:hover {
+            background-color: #cbd5e1; /* hover:bg-gray-300 */
+        }
+        .tab-selector-button.selected {
+            background-color: #6366f1; /* bg-indigo-500 */
+            color: #ffffff; /* text-white */
+            border-color: #4f46e5; /* darker indigo border */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
@@ -172,37 +200,40 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Category Tabs -->
                 <div>
-                    <label for="taskCategory" class="block text-sm font-medium text-gray-700 mb-1">Category (Optional)</label>
-                    <select id="taskCategory" name="taskCategory"
-                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="">Select Category</option>
-                        <option value="Work">Work</option>
-                        <option value="Personal">Personal</option>
-                        <option value="Personal Growth">Personal Growth</option>
-                        <option value="Professional Growth">Professional Growth</option>
-                        <option value="To Be Categorised">To Be Categorised</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category (Optional)</label>
+                    <div id="taskCategoryTabs" class="tab-selector-group">
+                        <button type="button" class="tab-selector-button" data-value="">None</button>
+                        <button type="button" class="tab-selector-button" data-value="Work">Work</button>
+                        <button type="button" class="tab-selector-button" data-value="Personal">Personal</button>
+                        <button type="button" class="tab-selector-button" data-value="Personal Growth">Personal Growth</button>
+                        <button type="button" class="tab-selector-button" data-value="Professional Growth">Professional Growth</button>
+                        <button type="button" class="tab-selector-button" data-value="To Be Categorised">To Be Categorised</button>
+                    </div>
+                    <input type="hidden" id="taskCategory" name="taskCategory" value="">
                 </div>
 
+                <!-- Urgency Tabs -->
                 <div>
-                    <label for="taskUrgency" class="block text-sm font-medium text-gray-700 mb-1">Urgency (Optional)</label>
-                    <select id="taskUrgency" name="taskUrgency"
-                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="">Select Urgency</option>
-                        <option value="Urgent">Urgent</option>
-                        <option value="Not Urgent">Not Urgent</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Urgency (Optional)</label>
+                    <div id="taskUrgencyTabs" class="tab-selector-group">
+                        <button type="button" class="tab-selector-button" data-value="">None</button>
+                        <button type="button" class="tab-selector-button" data-value="Urgent">Urgent</button>
+                        <button type="button" class="tab-selector-button" data-value="Not Urgent">Not Urgent</button>
+                    </div>
+                    <input type="hidden" id="taskUrgency" name="taskUrgency" value="">
                 </div>
 
+                <!-- Importance Tabs -->
                 <div>
-                    <label for="taskImportance" class="block text-sm font-medium text-gray-700 mb-1">Importance (Optional)</label>
-                    <select id="taskImportance" name="taskImportance"
-                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="">Select Importance</option>
-                        <option value="Important">Important</option>
-                        <option value="Not Important">Not Important</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Importance (Optional)</label>
+                    <div id="taskImportanceTabs" class="tab-selector-group">
+                        <button type="button" class="tab-selector-button" data-value="">None</button>
+                        <button type="button" class="tab-selector-button" data-value="Important">Important</button>
+                        <button type="button" class="tab-selector-button" data-value="Not Important">Not Important</button>
+                    </div>
+                    <input type="hidden" id="taskImportance" name="taskImportance" value="">
                 </div>
             </div>
 
@@ -244,38 +275,41 @@
                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
                 </div>
 
+                <!-- Edit Category Tabs -->
                 <div>
-                    <label for="editTaskCategory" class="block text-sm font-medium text-gray-700 mb-1">Category (Optional)</label>
-                    <select id="editTaskCategory" name="editTaskCategory"
-                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="">Select Category</option>
-                        <option value="Work">Work</option>
-                        <option value="Personal">Personal</option>
-                        <option value="Personal Growth">Personal Growth</option>
-                        <option value="Professional Growth">Professional Growth</option>
-                        <option value="To Be Categorised">To Be Categorised</option>
-                    </select>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category (Optional)</label>
+                    <div id="editTaskCategoryTabs" class="tab-selector-group">
+                        <button type="button" class="tab-selector-button" data-value="">None</button>
+                        <button type="button" class="tab-selector-button" data-value="Work">Work</button>
+                        <button type="button" class="tab-selector-button" data-value="Personal">Personal</button>
+                        <button type="button" class="tab-selector-button" data-value="Personal Growth">Personal Growth</button>
+                        <button type="button" class="tab-selector-button" data-value="Professional Growth">Professional Growth</button>
+                        <button type="button" class="tab-selector-button" data-value="To Be Categorised">To Be Categorised</button>
+                    </div>
+                    <input type="hidden" id="editTaskCategory" name="editTaskCategory" value="">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Edit Urgency Tabs -->
                     <div>
-                        <label for="editTaskUrgency" class="block text-sm font-medium text-gray-700 mb-1">Urgency (Optional)</label>
-                        <select id="editTaskUrgency" name="editTaskUrgency"
-                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <option value="">Select Urgency</option>
-                            <option value="Urgent">Urgent</option>
-                            <option value="Not Urgent">Not Urgent</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Urgency (Optional)</label>
+                        <div id="editTaskUrgencyTabs" class="tab-selector-group">
+                            <button type="button" class="tab-selector-button" data-value="">None</button>
+                            <button type="button" class="tab-selector-button" data-value="Urgent">Urgent</button>
+                            <button type="button" class="tab-selector-button" data-value="Not Urgent">Not Urgent</button>
+                        </div>
+                        <input type="hidden" id="editTaskUrgency" name="editTaskUrgency" value="">
                     </div>
 
+                    <!-- Edit Importance Tabs -->
                     <div>
-                        <label for="editTaskImportance" class="block text-sm font-medium text-gray-700 mb-1">Importance (Optional)</label>
-                        <select id="editTaskImportance" name="editTaskImportance"
-                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <option value="">Select Importance</option>
-                            <option value="Important">Important</option>
-                            <option value="Not Important">Not Important</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Importance (Optional)</label>
+                        <div id="editTaskImportanceTabs" class="tab-selector-group">
+                            <button type="button" class="tab-selector-button" data-value="">None</button>
+                            <button type="button" class="tab-selector-button" data-value="Important">Important</button>
+                            <button type="button" class="tab-selector-button" data-value="Not Important">Not Important</button>
+                        </div>
+                        <input type="hidden" id="editTaskImportance" name="editTaskImportance" value="">
                     </div>
                 </div>
 
@@ -315,24 +349,44 @@
         // Array to hold all tasks
         let tasks = [];
 
-        // DOM elements
+        // DOM elements for Add Task Form
         const taskForm = document.getElementById('taskForm');
-        const taskList = document.getElementById('taskList'); // This now refers to the container for the matrix
-        const noTasksMessage = document.getElementById('noTasksMessage');
+        const taskTitleInput = document.getElementById('taskTitle');
+        const taskCategoryHiddenInput = document.getElementById('taskCategory');
+        const taskUrgencyHiddenInput = document.getElementById('taskUrgency');
+        const taskImportanceHiddenInput = document.getElementById('taskImportance');
+
+        // DOM elements for Edit Task Modal
         const editModal = document.getElementById('editModal');
         const editTaskForm = document.getElementById('editTaskForm');
+        const editTaskCategoryHiddenInput = document.getElementById('editTaskCategory');
+        const editTaskUrgencyHiddenInput = document.getElementById('editTaskUrgency');
+        const editTaskImportanceHiddenInput = document.getElementById('editTaskImportance');
+
+        // DOM elements for Matrix and other controls
+        const taskList = document.getElementById('taskList'); // This now refers to the container for the matrix
+        const noTasksMessage = document.getElementById('noTasksMessage');
         const cancelEditButton = document.getElementById('cancelEdit');
         const exportTasksButton = document.getElementById('exportTasks');
         const importTasksButton = document.getElementById('importTasks');
         const importFileInput = document.getElementById('importFile');
-        const taskTitleInput = document.getElementById('taskTitle');
-        const taskCategoryInput = document.getElementById('taskCategory'); // Reference for category dropdown
 
         // Quadrant elements
         const quadrantUrgentImportant = document.getElementById('quadrantUrgentImportant');
         const quadrantUrgentNotImportant = document.getElementById('quadrantUrgentNotImportant');
         const quadrantNotUrgentImportant = document.getElementById('quadrantNotUrgentImportant');
         const quadrantNotUrgentNotImportant = document.getElementById('quadrantNotUrgentNotImportant');
+
+        // Define category colors mapping
+        const categoryColors = {
+            "Work": "border-blue-600",
+            "Personal": "border-purple-600",
+            "Personal Growth": "border-green-600",
+            "Professional Growth": "border-teal-600",
+            "To Be Categorised": "border-gray-600",
+            "": "border-indigo-400", // Default color for 'None' or uncategorized
+            "None": "border-indigo-400" // Explicit 'None' color
+        };
 
 
         // --- Utility Functions ---
@@ -380,9 +434,49 @@
          */
         function setLastSelectedCategory() {
             const lastCategory = localStorage.getItem('lastSelectedCategory');
-            if (lastCategory) {
-                taskCategoryInput.value = lastCategory;
-            }
+            // Select the corresponding tab in the add form
+            selectTab('taskCategoryTabs', lastCategory || '');
+        }
+
+        /**
+         * Handles the selection of a tab in a tab group.
+         * Updates the 'selected' class and the associated hidden input's value.
+         * @param {string} tabGroupId - The ID of the div containing the tab buttons.
+         * @param {string} valueToSelect - The data-value of the tab to select.
+         */
+        function selectTab(tabGroupId, valueToSelect) {
+            const tabGroup = document.getElementById(tabGroupId);
+            if (!tabGroup) return;
+
+            const hiddenInput = document.getElementById(tabGroupId.replace('Tabs', '')); // e.g., 'taskCategory'
+            if (!hiddenInput) return;
+
+            const buttons = tabGroup.querySelectorAll('.tab-selector-button');
+            buttons.forEach(button => {
+                if (button.dataset.value === valueToSelect) {
+                    button.classList.add('selected');
+                    hiddenInput.value = valueToSelect;
+                } else {
+                    button.classList.remove('selected');
+                }
+            });
+        }
+
+        /**
+         * Event listener for tab button clicks.
+         * @param {Event} event - The click event.
+         */
+        function handleTabClick(event) {
+            const clickedButton = event.target.closest('.tab-selector-button');
+            if (!clickedButton) return;
+
+            const tabGroup = clickedButton.closest('.tab-selector-group');
+            if (!tabGroup) return;
+
+            const tabGroupId = tabGroup.id;
+            const valueToSelect = clickedButton.dataset.value;
+
+            selectTab(tabGroupId, valueToSelect);
         }
 
         /**
@@ -405,10 +499,14 @@
             tasks.forEach(task => {
                 const taskCard = document.createElement('div');
                 taskCard.id = `task-${task.id}`;
+                
+                // Determine category border color
+                const categoryBorderClass = categoryColors[task.category] || categoryColors["None"];
+
                 taskCard.classList.add(
                     'task-card',
                     'bg-white', 'p-4', 'rounded-lg', 'shadow-sm', 'flex', 'flex-col', 'space-y-2',
-                    'border-l-4', 'border-indigo-400'
+                    'border-l-4', categoryBorderClass // Apply dynamic category border color
                 );
 
                 // Task Title
@@ -480,11 +578,11 @@
         function addTask(event) {
             event.preventDefault(); // Prevent default form submission
 
-            const title = document.getElementById('taskTitle').value.trim();
+            const title = taskTitleInput.value.trim();
             const description = document.getElementById('taskDescription').value.trim();
-            const category = document.getElementById('taskCategory').value; // Get value directly from select
-            const urgency = document.getElementById('taskUrgency').value;
-            const importance = document.getElementById('taskImportance').value;
+            const category = taskCategoryHiddenInput.value;
+            const urgency = taskUrgencyHiddenInput.value;
+            const importance = taskImportanceHiddenInput.value;
 
             if (!title) {
                 showTemporaryMessage('Task title is required!', 'warning');
@@ -507,7 +605,9 @@
             taskForm.reset(); // Clear the form
             // Save the last selected category
             localStorage.setItem('lastSelectedCategory', category || '');
-            taskCategoryInput.value = category || ''; // Re-set the category to the last selected one
+            selectTab('taskCategoryTabs', category || ''); // Re-select the category tab
+            selectTab('taskUrgencyTabs', ''); // Reset urgency tab
+            selectTab('taskImportanceTabs', ''); // Reset importance tab
             taskTitleInput.focus(); // Keep focus on the title input for quick adding
         }
 
@@ -537,9 +637,11 @@
             document.getElementById('editTaskId').value = taskToEdit.id;
             document.getElementById('editTaskTitle').value = taskToEdit.title;
             document.getElementById('editTaskDescription').value = taskToEdit.description || '';
-            document.getElementById('editTaskCategory').value = taskToEdit.category || '';
-            document.getElementById('editTaskUrgency').value = taskToEdit.urgency || '';
-            document.getElementById('editTaskImportance').value = taskToEdit.importance || '';
+
+            // Select tabs in the edit modal
+            selectTab('editTaskCategoryTabs', taskToEdit.category || '');
+            selectTab('editTaskUrgencyTabs', taskToEdit.urgency || '');
+            selectTab('editTaskImportanceTabs', taskToEdit.importance || '');
 
             editModal.classList.remove('hidden');
         }
@@ -562,9 +664,9 @@
             const id = document.getElementById('editTaskId').value;
             const title = document.getElementById('editTaskTitle').value.trim();
             const description = document.getElementById('editTaskDescription').value.trim();
-            const category = document.getElementById('editTaskCategory').value;
-            const urgency = document.getElementById('editTaskUrgency').value;
-            const importance = document.getElementById('editTaskImportance').value;
+            const category = editTaskCategoryHiddenInput.value;
+            const urgency = editTaskUrgencyHiddenInput.value;
+            const importance = editTaskImportanceHiddenInput.value;
 
             if (!title) {
                 showTemporaryMessage('Task title cannot be empty!', 'warning');
@@ -786,7 +888,7 @@
                 conflictModal.classList.add('hidden');
             };
             replaceBtn.onclick = () => {
-                replaceImportedTasks(newTasks); // This is the function that needs to be updated
+                replaceImportedTasks(newTasks);
                 conflictModal.classList.add('hidden');
             };
             cancelBtn.onclick = () => {
@@ -845,12 +947,8 @@
             // Convert map values back to an array
             tasks = Array.from(combinedTasksMap.values());
 
-            // Sort tasks to maintain a consistent order (e.g., by ID or title, or just reverse to keep latest at top if that's implied by unshift)
-            // For simplicity and to maintain the "latest at top" behavior from unshift, we can reverse the array if needed after conversion,
-            // or just accept the order from map iteration. If a specific order is desired, it needs explicit sorting.
-            // For now, let's just use the order from Map iteration which preserves insertion order for unique keys.
-            // If the goal is to have the *most recent* imported task at the top of the overall list,
-            // then a more complex sorting might be needed, but for "no duplicates" with new taking precedence, this is fine.
+            // Optionally, if a specific order is desired after replacement, sort here.
+            // For now, Map iteration order is preserved (insertion order for unique keys).
 
             saveTasks();
             renderTasks();
@@ -874,6 +972,11 @@
             }
         });
 
+        // Attach event listeners to tab groups for the add form
+        document.getElementById('taskCategoryTabs').addEventListener('click', handleTabClick);
+        document.getElementById('taskUrgencyTabs').addEventListener('click', handleTabClick);
+        document.getElementById('taskImportanceTabs').addEventListener('click', handleTabClick);
+
         // Edit task form submission
         editTaskForm.addEventListener('submit', saveEditedTask);
 
@@ -886,6 +989,12 @@
                 closeEditModal();
             }
         });
+
+        // Attach event listeners to tab groups for the edit modal
+        document.getElementById('editTaskCategoryTabs').addEventListener('click', handleTabClick);
+        document.getElementById('editTaskUrgencyTabs').addEventListener('click', handleTabClick);
+        document.getElementById('editTaskImportanceTabs').addEventListener('click', handleTabClick);
+
 
         // Export tasks button click
         exportTasksButton.addEventListener('click', exportTasks);
