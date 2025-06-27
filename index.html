@@ -252,6 +252,20 @@
                 </div>
             </div>
 
+            <!-- Conditional Fields for Add Task Form -->
+            <div id="addTaskScheduledDateContainer" class="hidden">
+                <label for="taskScheduledDate" class="block text-sm font-medium text-gray-700 mb-1">Scheduled Date (Optional)</label>
+                <input type="date" id="taskScheduledDate" name="taskScheduledDate"
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+
+            <div id="addTaskDelegatedToContainer" class="hidden">
+                <label for="taskDelegatedTo" class="block text-sm font-medium text-gray-700 mb-1">Delegated To (Optional)</label>
+                <input type="text" id="taskDelegatedTo" name="taskDelegatedTo"
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                       placeholder="Name of person to delegate to">
+            </div>
+
             <button type="submit" class="btn-primary w-full py-3 px-6 rounded-md text-white font-semibold text-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Add Task
             </button>
@@ -339,6 +353,20 @@
                     </div>
                 </div>
 
+                <!-- Conditional Fields for Edit Task Modal -->
+                <div id="editTaskScheduledDateContainer" class="hidden">
+                    <label for="editTaskScheduledDate" class="block text-sm font-medium text-gray-700 mb-1">Scheduled Date (Optional)</label>
+                    <input type="date" id="editTaskScheduledDate" name="editTaskScheduledDate"
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+
+                <div id="editTaskDelegatedToContainer" class="hidden">
+                    <label for="editTaskDelegatedTo" class="block text-sm font-medium text-gray-700 mb-1">Delegated To (Optional)</label>
+                    <input type="text" id="editTaskDelegatedTo" name="editTaskDelegatedTo"
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="Name of person to delegate to">
+                </div>
+
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" id="cancelEdit" class="btn-secondary py-2 px-4 rounded-md text-gray-700 font-medium shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300">
                         Cancel
@@ -383,6 +411,10 @@
         const taskCategoryHiddenInput = document.getElementById('taskCategory');
         const taskUrgencyHiddenInput = document.getElementById('taskUrgency');
         const taskImportanceHiddenInput = document.getElementById('taskImportance');
+        const addTaskScheduledDateInput = document.getElementById('taskScheduledDate'); // New: Scheduled Date input
+        const addTaskDelegatedToInput = document.getElementById('taskDelegatedTo'); // New: Delegated To input
+        const addTaskScheduledDateContainer = document.getElementById('addTaskScheduledDateContainer'); // New: Container for scheduled date
+        const addTaskDelegatedToContainer = document.getElementById('addTaskDelegatedToContainer'); // New: Container for delegated to
 
         // DOM elements for Edit Task Modal
         const editModal = document.getElementById('editModal');
@@ -390,6 +422,11 @@
         const editTaskCategoryHiddenInput = document.getElementById('editTaskCategory');
         const editTaskUrgencyHiddenInput = document.getElementById('editTaskUrgency');
         const editTaskImportanceHiddenInput = document.getElementById('editTaskImportance');
+        const editTaskScheduledDateInput = document.getElementById('editTaskScheduledDate'); // New: Edit Scheduled Date input
+        const editTaskDelegatedToInput = document.getElementById('editTaskDelegatedTo'); // New: Edit Delegated To input
+        const editTaskScheduledDateContainer = document.getElementById('editTaskScheduledDateContainer'); // New: Container for edit scheduled date
+        const editTaskDelegatedToContainer = document.getElementById('editTaskDelegatedToContainer'); // New: Container for edit delegated to
+
 
         // DOM elements for Matrix and other controls
         const taskList = document.getElementById('taskList'); // This now refers to the container for the matrix
@@ -452,6 +489,7 @@
                 saveState(); // Save initial state to history
                 renderTasks();
                 setLastSelectedCategory(); // Set the last selected category on load
+                updateConditionalFields('task'); // Initialize conditional fields on load
             } catch (e) {
                 console.error("Error loading tasks from local storage:", e);
                 showTemporaryMessage("Failed to load tasks from local storage. Data might be corrupted.", 'error');
@@ -521,8 +559,9 @@
          * Updates the 'selected' class and the associated hidden input's value.
          * @param {string} tabGroupId - The ID of the div containing the tab buttons.
          * @param {string} valueToSelect - The data-value of the tab to select.
+         * @param {string} formType - 'task' for add form, 'editTask' for edit modal.
          */
-        function selectTab(tabGroupId, valueToSelect) {
+        function selectTab(tabGroupId, valueToSelect, formType) {
             const tabGroup = document.getElementById(tabGroupId);
             if (!tabGroup) return;
 
@@ -547,6 +586,13 @@
                     button.classList.remove('selected');
                 }
             });
+
+            // If it's an urgency or importance tab, update conditional fields
+            if (tabGroupId.includes('UrgencyTabs') || tabGroupId.includes('ImportanceTabs')) {
+                // Pass the correct form type based on the tabGroupId
+                const currentFormType = tabGroupId.startsWith('task') ? 'task' : 'editTask';
+                updateConditionalFields(currentFormType);
+            }
         }
 
         /**
@@ -564,6 +610,45 @@
             const valueToSelect = clickedButton.dataset.value;
 
             selectTab(tabGroupId, valueToSelect);
+        }
+
+        /**
+         * Conditionally shows/hides scheduled date and delegated to fields.
+         * @param {string} formType - 'task' for add form, 'editTask' for edit modal.
+         */
+        function updateConditionalFields(formType) {
+            let urgencyInput, importanceInput, scheduledDateContainer, delegatedToContainer;
+
+            if (formType === 'task') {
+                urgencyInput = taskUrgencyHiddenInput;
+                importanceInput = taskImportanceHiddenInput;
+                scheduledDateContainer = addTaskScheduledDateContainer;
+                delegatedToContainer = addTaskDelegatedToContainer;
+            } else { // formType === 'editTask'
+                urgencyInput = editTaskUrgencyHiddenInput;
+                importanceInput = editTaskImportanceHiddenInput;
+                scheduledDateContainer = editTaskScheduledDateContainer;
+                delegatedToContainer = editTaskDelegatedToContainer;
+            }
+
+            const currentUrgency = urgencyInput.value;
+            const currentImportance = importanceInput.value;
+
+            // Schedule: Not Urgent & Important
+            if (currentUrgency === 'Not Urgent' && currentImportance === 'Important') {
+                scheduledDateContainer.classList.remove('hidden');
+                delegatedToContainer.classList.add('hidden');
+            }
+            // Delegate: Urgent & Not Important
+            else if (currentUrgency === 'Urgent' && currentImportance === 'Not Important') {
+                delegatedToContainer.classList.remove('hidden');
+                scheduledDateContainer.classList.add('hidden');
+            }
+            // Hide both otherwise
+            else {
+                scheduledDateContainer.classList.add('hidden');
+                delegatedToContainer.classList.add('hidden');
+            }
         }
 
         /**
@@ -592,85 +677,133 @@
                 noCompletedTasksMessage.classList.add('hidden');
             }
 
+            // Separate tasks by quadrant for sorting
+            const doFirstTasks = [];
+            const scheduleTasks = [];
+            const delegateTasks = [];
+            const eliminateTasks = [];
 
             activeTasks.forEach(task => {
-                const taskCard = document.createElement('div');
-                taskCard.id = `task-${task.id}`;
-                
-                // Determine category border color
-                const categoryBorderClass = categoryColors[task.category] || categoryColors["None"];
-
-                taskCard.classList.add(
-                    'task-card',
-                    'bg-white', 'p-4', 'rounded-lg', 'shadow-sm', 'flex', 'flex-col', 'space-y-2',
-                    'border-l-4', categoryBorderClass // Apply dynamic category border color
-                );
-
-                // Task Title
-                const titleElement = document.createElement('h4');
-                titleElement.classList.add('text-lg', 'font-semibold', 'text-gray-900');
-                titleElement.textContent = task.title;
-                taskCard.appendChild(titleElement);
-
-                // Task Description (if present)
-                if (task.description) {
-                    const descriptionElement = document.createElement('p');
-                    descriptionElement.classList.add('text-gray-700', 'text-sm');
-                    descriptionElement.textContent = task.description;
-                    taskCard.appendChild(descriptionElement);
-                }
-
-                // Metadata (Category only, Urgency and Importance are implied by quadrant)
-                const metaDiv = document.createElement('div');
-                metaDiv.classList.add('flex', 'flex-wrap', 'gap-2', 'text-xs', 'font-medium');
-
-                if (task.category) {
-                    const categorySpan = document.createElement('span');
-                    categorySpan.classList.add('bg-blue-100', 'text-blue-800', 'px-2.5', 'py-0.5', 'rounded-full');
-                    categorySpan.textContent = `Category: ${task.category}`;
-                    metaDiv.appendChild(categorySpan);
-                }
-                if (metaDiv.children.length > 0) {
-                    taskCard.appendChild(metaDiv);
-                }
-
-                // Actions (Done, Edit, Delete)
-                const actionsDiv = document.createElement('div');
-                actionsDiv.classList.add('flex', 'gap-2', 'mt-3', 'justify-end');
-
-                const doneButton = document.createElement('button');
-                doneButton.classList.add('btn-done', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
-                doneButton.textContent = 'Done';
-                doneButton.onclick = () => markTaskAsDone(task.id);
-                actionsDiv.appendChild(doneButton);
-
-                const editButton = document.createElement('button');
-                editButton.classList.add('btn-edit', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
-                editButton.textContent = 'Edit';
-                editButton.onclick = () => openEditModal(task.id);
-                actionsDiv.appendChild(editButton);
-
-                const deleteButton = document.createElement('button');
-                deleteButton.classList.add('btn-delete', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
-                deleteButton.textContent = 'Delete';
-                deleteButton.onclick = () => showConfirmDialog('Delete Task', 'Are you sure you want to delete this task?', () => deleteTaskConfirmed(task.id));
-                actionsDiv.appendChild(deleteButton);
-
-                taskCard.appendChild(actionsDiv);
-
-                // Determine which quadrant to append the task to
                 const isUrgent = task.urgency === 'Urgent';
                 const isImportant = task.importance === 'Important';
 
                 if (isUrgent && isImportant) {
-                    quadrantUrgentImportant.appendChild(taskCard);
+                    doFirstTasks.push(task);
                 } else if (isUrgent && !isImportant) {
-                    quadrantUrgentNotImportant.appendChild(taskCard);
+                    delegateTasks.push(task); // Delegate quadrant
                 } else if (!isUrgent && isImportant) {
-                    quadrantNotUrgentImportant.appendChild(taskCard);
-                } else { // Default to Not Urgent & Not Important if values are null or not set
-                    quadrantNotUrgentNotImportant.appendChild(taskCard);
+                    scheduleTasks.push(task); // Schedule quadrant
+                } else { // Not Urgent & Not Important or values are null
+                    eliminateTasks.push(task); // Eliminate quadrant
                 }
+            });
+
+            // Sort Schedule tasks: by scheduledDate (null/empty on top)
+            scheduleTasks.sort((a, b) => {
+                const dateA = a.scheduledDate ? new Date(a.scheduledDate).getTime() : -Infinity;
+                const dateB = b.scheduledDate ? new Date(b.scheduledDate).getTime() : -Infinity;
+                return dateA - dateB;
+            });
+
+            // Sort Delegate tasks: by delegatedTo name (null/empty on top)
+            delegateTasks.sort((a, b) => {
+                const nameA = a.delegatedTo ? a.delegatedTo.toLowerCase() : '';
+                const nameB = b.delegatedTo ? b.delegatedTo.toLowerCase() : '';
+
+                if (!a.delegatedTo && !b.delegatedTo) return 0;
+                if (!a.delegatedTo) return -1; // a is null/empty, comes first
+                if (!b.delegatedTo) return 1;  // b is null/empty, comes first
+
+                return nameA.localeCompare(nameB);
+            });
+
+            // Render tasks into their respective quadrants
+            [
+                { tasks: doFirstTasks, container: quadrantUrgentImportant },
+                { tasks: scheduleTasks, container: quadrantNotUrgentImportant },
+                { tasks: delegateTasks, container: quadrantUrgentNotImportant },
+                { tasks: eliminateTasks, container: quadrantNotUrgentNotImportant }
+            ].forEach(({ tasks: quadrantTasks, container }) => {
+                quadrantTasks.forEach(task => {
+                    const taskCard = document.createElement('div');
+                    taskCard.id = `task-${task.id}`;
+                    
+                    // Determine category border color
+                    const categoryBorderClass = categoryColors[task.category] || categoryColors["None"];
+
+                    taskCard.classList.add(
+                        'task-card',
+                        'bg-white', 'p-4', 'rounded-lg', 'shadow-sm', 'flex', 'flex-col', 'space-y-2',
+                        'border-l-4', categoryBorderClass // Apply dynamic category border color
+                    );
+
+                    // Task Title
+                    const titleElement = document.createElement('h4');
+                    titleElement.classList.add('text-lg', 'font-semibold', 'text-gray-900');
+                    titleElement.textContent = task.title;
+                    taskCard.appendChild(titleElement);
+
+                    // Task Description (if present)
+                    if (task.description) {
+                        const descriptionElement = document.createElement('p');
+                        descriptionElement.classList.add('text-gray-700', 'text-sm');
+                        descriptionElement.textContent = task.description;
+                        taskCard.appendChild(descriptionElement);
+                    }
+
+                    // Conditional display for scheduled date or delegated to
+                    if (task.urgency === 'Not Urgent' && task.importance === 'Important' && task.scheduledDate) { // Schedule quadrant
+                        const dateElement = document.createElement('p');
+                        dateElement.classList.add('text-gray-600', 'text-sm', 'font-medium');
+                        dateElement.textContent = `Schedule: ${new Date(task.scheduledDate).toLocaleDateString()}`;
+                        taskCard.appendChild(dateElement);
+                    } else if (task.urgency === 'Urgent' && task.importance === 'Not Important' && task.delegatedTo) { // Delegate quadrant
+                        const delegatedElement = document.createElement('p');
+                        delegatedElement.classList.add('text-gray-600', 'text-sm', 'font-medium');
+                        delegatedElement.textContent = `Delegate: ${task.delegatedTo}`;
+                        taskCard.appendChild(delegatedElement);
+                    }
+
+
+                    // Metadata (Category only)
+                    const metaDiv = document.createElement('div');
+                    metaDiv.classList.add('flex', 'flex-wrap', 'gap-2', 'text-xs', 'font-medium');
+
+                    if (task.category) {
+                        const categorySpan = document.createElement('span');
+                        categorySpan.classList.add('bg-blue-100', 'text-blue-800', 'px-2.5', 'py-0.5', 'rounded-full');
+                        categorySpan.textContent = `Category: ${task.category}`;
+                        metaDiv.appendChild(categorySpan);
+                    }
+                    if (metaDiv.children.length > 0) {
+                        taskCard.appendChild(metaDiv);
+                    }
+
+                    // Actions (Done, Edit, Delete)
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.classList.add('flex', 'gap-2', 'mt-3', 'justify-end');
+
+                    const doneButton = document.createElement('button');
+                    doneButton.classList.add('btn-done', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
+                    doneButton.textContent = 'Done';
+                    doneButton.onclick = () => markTaskAsDone(task.id);
+                    actionsDiv.appendChild(doneButton);
+
+                    const editButton = document.createElement('button');
+                    editButton.classList.add('btn-edit', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
+                    editButton.textContent = 'Edit';
+                    editButton.onclick = () => openEditModal(task.id);
+                    actionsDiv.appendChild(editButton);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('btn-delete', 'py-1', 'px-3', 'rounded-md', 'text-white', 'font-medium', 'shadow-sm', 'hover:shadow-md', 'text-sm');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => showConfirmDialog('Delete Task', 'Are you sure you want to delete this task?', () => deleteTaskConfirmed(task.id));
+                    actionsDiv.appendChild(deleteButton);
+
+                    taskCard.appendChild(actionsDiv);
+                    container.appendChild(taskCard);
+                });
             });
 
             // Render completed tasks
@@ -738,6 +871,8 @@
             const category = taskCategoryHiddenInput.value;
             const urgency = taskUrgencyHiddenInput.value;
             const importance = taskImportanceHiddenInput.value;
+            const scheduledDate = addTaskScheduledDateInput.value; // Get scheduled date
+            const delegatedTo = addTaskDelegatedToInput.value.trim(); // Get delegated to
 
             if (!title) {
                 showTemporaryMessage('Task title is required!', 'warning');
@@ -751,6 +886,8 @@
                 category: category || null, // Store as null if empty
                 urgency: urgency || null,   // Store as null if empty
                 importance: importance || null, // Store as null if empty
+                scheduledDate: (urgency === 'Not Urgent' && importance === 'Important') ? (scheduledDate || null) : null,
+                delegatedTo: (urgency === 'Urgent' && importance === 'Not Important') ? (delegatedTo || null) : null,
                 completed: false // Default completion status
             };
 
@@ -764,6 +901,7 @@
             selectTab('taskCategoryTabs', category || ''); // Re-select the category tab
             selectTab('taskUrgencyTabs', ''); // Reset urgency tab
             selectTab('taskImportanceTabs', ''); // Reset importance tab
+            updateConditionalFields('task'); // Reset conditional fields visibility
             taskTitleInput.focus(); // Keep focus on the title input for quick adding
         }
 
@@ -830,6 +968,11 @@
             selectTab('editTaskUrgencyTabs', taskToEdit.urgency || '');
             selectTab('editTaskImportanceTabs', taskToEdit.importance || '');
 
+            // Populate and show/hide conditional fields for edit modal
+            editTaskScheduledDateInput.value = taskToEdit.scheduledDate || '';
+            editTaskDelegatedToInput.value = taskToEdit.delegatedTo || '';
+            updateConditionalFields('editTask'); // Update visibility based on loaded task properties
+
             editModal.classList.remove('hidden');
         }
 
@@ -839,6 +982,7 @@
         function closeEditModal() {
             editModal.classList.add('hidden');
             editTaskForm.reset(); // Clear the edit form
+            updateConditionalFields('editTask'); // Hide conditional fields on close
         }
 
         /**
@@ -854,6 +998,8 @@
             const category = editTaskCategoryHiddenInput.value;
             const urgency = editTaskUrgencyHiddenInput.value;
             const importance = editTaskImportanceHiddenInput.value;
+            const scheduledDate = editTaskScheduledDateInput.value;
+            const delegatedTo = editTaskDelegatedToInput.value.trim();
 
             if (!title) {
                 showTemporaryMessage('Task title cannot be empty!', 'warning');
@@ -868,7 +1014,9 @@
                     description: description || null,
                     category: category || null,
                     urgency: urgency || null,
-                    importance: importance || null
+                    importance: importance || null,
+                    scheduledDate: (urgency === 'Not Urgent' && importance === 'Important') ? (scheduledDate || null) : null,
+                    delegatedTo: (urgency === 'Urgent' && importance === 'Not Important') ? (delegatedTo || null) : null
                 };
                 saveTasks();
                 saveState(); // Save state after editing
@@ -1168,6 +1316,11 @@
         document.getElementById('taskUrgencyTabs').addEventListener('click', handleTabClick);
         document.getElementById('taskImportanceTabs').addEventListener('click', handleTabClick);
 
+        // Add event listeners for urgency/importance tabs to update conditional fields
+        document.getElementById('taskUrgencyTabs').addEventListener('click', () => updateConditionalFields('task'));
+        document.getElementById('taskImportanceTabs').addEventListener('click', () => updateConditionalFields('task'));
+
+
         // Edit task form submission
         editTaskForm.addEventListener('submit', saveEditedTask);
 
@@ -1185,6 +1338,10 @@
         document.getElementById('editTaskCategoryTabs').addEventListener('click', handleTabClick);
         document.getElementById('editTaskUrgencyTabs').addEventListener('click', handleTabClick);
         document.getElementById('editTaskImportanceTabs').addEventListener('click', handleTabClick);
+
+        // Add event listeners for urgency/importance tabs in edit modal to update conditional fields
+        document.getElementById('editTaskUrgencyTabs').addEventListener('click', () => updateConditionalFields('editTask'));
+        document.getElementById('editTaskImportanceTabs').addEventListener('click', () => updateConditionalFields('editTask'));
 
 
         // Export tasks button click
